@@ -1,0 +1,60 @@
+name: Bicep Validation and What-If
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**.bicep'
+      - '**.parameters.json'
+      - '.github/workflows/**'
+
+env:
+  AZURE_RESOURCE_GROUP: rg-smb-landingzone-dev-eastus
+  LOCATION: eastus
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Bicep
+        run: |
+          curl -Lo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x ./bicep
+          sudo mv ./bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: Run Bicep Linter
+        run: bicep build main.bicep
+
+  # Note: The What-If job requires Azure Credentials.
+  # To enable this, configure the AZURE_CREDENTIALS secret in your GitHub repository.
+  what-if:
+    needs: lint-and-validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # - name: Azure Login
+      #   uses: azure/login@v1
+      #   with:
+      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # - name: Run Azure Resource Manager What-If
+      #   uses: azure/arm-deploy@v1
+      #   with:
+      #     subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+      #     resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+      #     template: ./main.bicep
+      #     parameters: ./parameters/dev.parameters.json
+      #     additionalArguments: --what-if
+      - name: Placeholder for What-If
+        run: echo "Configure AZURE_CREDENTIALS to enable true What-If deployments"

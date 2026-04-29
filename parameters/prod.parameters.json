@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus"
+    },
+    "environment": {
+      "value": "prod"
+    },
+    "costCenter": {
+      "value": "IT-100"
+    },
+    "project": {
+      "value": "SMB-LandingZone"
+    },
+    "deployFirewall": {
+      "value": true
+    },
+    "deployBastion": {
+      "value": true
+    },
+    "deployVpnGateway": {
+      "value": true
+    }
+  }
+}
