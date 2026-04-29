@@ -22,6 +22,9 @@
     },
     "deployVpnGateway": {
       "value": false
+    },
+    "owner": {
+      "value": "IT Admin"
     }
   }
 }

@@ -22,6 +22,9 @@
     },
     "deployVpnGateway": {
       "value": true
+    },
+    "owner": {
+      "value": "Finance Admin"
     }
   }
 }

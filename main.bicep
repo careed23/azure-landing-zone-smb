@@ -1,4 +1,4 @@
-targetScope = 'resourceGroup'
+targetScope = 'subscription'
 
 @description('Azure region for the deployment')
 param location string = resourceGroup().location
@@ -25,10 +25,13 @@ param deployBastion bool = false
 @description('Toggles the deployment of VPN Gateway')
 param deployVpnGateway bool = false
 
+@description('Owner for tagging')
+param owner string
+
 // Common Tags
 var requiredTags = {
   Environment: environment
-  Owner: 'IT Admin' // Or can be passed as a param
+  Owner: owner
   CostCenter: costCenter
   Project: project
   ManagedBy: 'Bicep'
@@ -37,6 +40,7 @@ var requiredTags = {
 // 1. Governance / Policy
 module policy 'modules/policy.bicep' = {
   name: 'deploy-policy'
+  scope: subscription()
   params: {
     location: location
   }
@@ -183,7 +187,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
       name: 'standard'
     }
     tenantId: subscription().tenantId
-    accessPolicies: []
+    enableRbacAuthorization: true
     enableSoftDelete: true
   }
 }

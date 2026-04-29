@@ -34,7 +34,7 @@ var routeTableName = 'rt-spoke-${spokeName}-${environment}-${location}'
 
 // [SECURITY RATIONALE] We force all Outbound (0.0.0.0/0) traffic from the Spoke to go through 
 // the Hub's Azure Firewall for deep packet inspection and logging (Zero Trust architecture).
-resource routeTable 'Microsoft.Network/routeTables@2023-09-01' = {
+resource routeTable 'Microsoft.Network/routeTables@2023-09-01' = if (!empty(firewallPrivateIp)) {
   name: routeTableName
   location: location
   tags: requiredTags
@@ -61,7 +61,7 @@ var mappedSubnets = [for subnet in subnets: {
     networkSecurityGroup: {
       id: subnet.nsgId
     }
-    routeTable: {
+    routeTable: if (!empty(firewallPrivateIp)) {
       id: routeTable.id
     }
   }
