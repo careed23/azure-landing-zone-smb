@@ -1,7 +1,7 @@
 targetScope = 'subscription'
 
 @description('Azure region for the deployment')
-param location string = resourceGroup().location
+param location string = deployment().location
 
 @description('Environment prefix (e.g., dev, prod)')
 @allowed([
@@ -37,6 +37,11 @@ var requiredTags = {
   ManagedBy: 'Bicep'
 }
 
+resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: 'rg-${environment}-landing-zone'
+  location: location
+}
+
 // 1. Governance / Policy
 module policy 'modules/policy.bicep' = {
   name: 'deploy-policy'
@@ -49,6 +54,7 @@ module policy 'modules/policy.bicep' = {
 // 2. Log Analytics
 module logAnalytics 'modules/log-analytics.bicep' = {
   name: 'deploy-log-analytics'
+  scope: rg
   params: {
     location: location
     environment: environment
@@ -60,6 +66,7 @@ module logAnalytics 'modules/log-analytics.bicep' = {
 // 3. Hub VNet & Firewall
 module hubVnet 'modules/hub-vnet.bicep' = {
   name: 'deploy-hub-vnet'
+  scope: rg
   params: {
     location: location
     environment: environment
@@ -74,6 +81,7 @@ module hubVnet 'modules/hub-vnet.bicep' = {
 // 4. NSGs for Spokes
 module nsgApp 'modules/nsg.bicep' = {
   name: 'deploy-nsg-app'
+  scope: rg
   params: {
     location: location
     environment: environment
@@ -113,6 +121,7 @@ module nsgApp 'modules/nsg.bicep' = {
 
 module nsgDb 'modules/nsg.bicep' = {
   name: 'deploy-nsg-db'
+  scope: rg
   params: {
     location: location
     environment: environment
@@ -140,6 +149,7 @@ module nsgDb 'modules/nsg.bicep' = {
 // 5. Spoke VNet (e.g., Production or Dev workload Spoke)
 module spokeVnet 'modules/spoke-vnet.bicep' = {
   name: 'deploy-spoke-vnet'
+  scope: rg
   dependsOn: [
     hubVnet
   ]
@@ -171,6 +181,7 @@ module spokeVnet 'modules/spoke-vnet.bicep' = {
 // 6. RBAC Assignments (Placeholder for demonstration)
 module rbac 'modules/rbac.bicep' = {
   name: 'deploy-rbac'
+  scope: rg
   params: {
     roleAssignments: [] // Array of assignments would go here based on Entra ID Object IDs
   }
@@ -178,7 +189,7 @@ module rbac 'modules/rbac.bicep' = {
 
 // 7. Key Vault (Placeholder) & Diagnostics
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: 'kv-${environment}-${substring(uniqueString(resourceGroup().id), 0, 5)}'
+  name: 'kv-${environment}-${substring(uniqueString(rg.id), 0, 5)}'
   location: location
   tags: requiredTags
   properties: {

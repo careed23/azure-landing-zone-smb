@@ -61,9 +61,9 @@ var mappedSubnets = [for subnet in subnets: {
     networkSecurityGroup: {
       id: subnet.nsgId
     }
-    routeTable: if (!empty(firewallPrivateIp)) {
+    routeTable: !empty(firewallPrivateIp) ? {
       id: routeTable.id
-    }
+    } : null
   }
 }]
 
