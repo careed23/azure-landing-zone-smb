@@ -7,6 +7,9 @@ param environment string
 @description('Mandatory tags to apply to all resources')
 param requiredTags object
 
+@description('Log Analytics Workspace ID for diagnostic settings')
+param logAnalyticsWorkspaceId string
+
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: 'kv-${environment}-${substring(uniqueString(resourceGroup().id), 0, 5)}'
   location: location
@@ -26,7 +29,7 @@ resource kvDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview
   name: 'diag-kv'
   scope: keyVault
   properties: {
-    workspaceId: logAnalytics.outputs.workspaceId
+    workspaceId: logAnalyticsWorkspaceId
     logs: [
       {
         categoryGroup: 'allLogs'

@@ -1,7 +1,10 @@
-targetScope = 'resourceGroup'
+targetScope = 'subscription'
 
 @description('Azure region for the deployment')
-param location string = resourceGroup().location
+param location string
+
+@description('Name of the resource group to create')
+param resourceGroupName string
 
 @description('Environment prefix (e.g., dev, prod)')
 @allowed([
@@ -37,10 +40,15 @@ var requiredTags = {
   ManagedBy: 'Bicep'
 }
 
+resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: resourceGroupName
+  location: location
+}
+
 // 1. Governance / Policy
 module policy 'modules/policy.bicep' = {
   name: 'deploy-policy'
-  scope: resourceGroup()
+  scope: subscription()
   params: {
     location: location
   }
@@ -49,7 +57,7 @@ module policy 'modules/policy.bicep' = {
 // 2. Log Analytics
 module logAnalytics 'modules/log-analytics.bicep' = {
   name: 'deploy-log-analytics'
-  scope: resourceGroup()
+  scope: resourceGroup(rg.name)
   params: {
     location: location
     environment: environment
@@ -61,7 +69,7 @@ module logAnalytics 'modules/log-analytics.bicep' = {
 // 3. Hub VNet & Firewall
 module hubVnet 'modules/hub-vnet.bicep' = {
   name: 'deploy-hub-vnet'
-  scope: resourceGroup()
+  scope: resourceGroup(rg.name)
   params: {
     location: location
     environment: environment
@@ -76,7 +84,7 @@ module hubVnet 'modules/hub-vnet.bicep' = {
 // 4. NSGs for Spokes
 module nsgApp 'modules/nsg.bicep' = {
   name: 'deploy-nsg-app'
-  scope: resourceGroup()
+  scope: resourceGroup(rg.name)
   params: {
     location: location
     environment: environment
@@ -116,7 +124,7 @@ module nsgApp 'modules/nsg.bicep' = {
 
 module nsgDb 'modules/nsg.bicep' = {
   name: 'deploy-nsg-db'
-  scope: resourceGroup()
+  scope: resourceGroup(rg.name)
   params: {
     location: location
     environment: environment
@@ -144,10 +152,7 @@ module nsgDb 'modules/nsg.bicep' = {
 // 5. Spoke VNet (e.g., Production or Dev workload Spoke)
 module spokeVnet 'modules/spoke-vnet.bicep' = {
   name: 'deploy-spoke-vnet'
-  scope: resourceGroup()
-  dependsOn: [
-    hubVnet
-  ]
+  scope: resourceGroup(rg.name)
   params: {
     location: location
     environment: environment
@@ -176,45 +181,21 @@ module spokeVnet 'modules/spoke-vnet.bicep' = {
 // 6. RBAC Assignments (Placeholder for demonstration)
 module rbac 'modules/rbac.bicep' = {
   name: 'deploy-rbac'
-  scope: resourceGroup()
+  scope: resourceGroup(rg.name)
   params: {
     roleAssignments: [] // Array of assignments would go here based on Entra ID Object IDs
   }
 }
 
-// 7. Key Vault (Placeholder) & Diagnostics
-resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: 'kv-${environment}-${substring(uniqueString(resourceGroup().id), 0, 5)}'
-  location: location
-  tags: requiredTags
-  properties: {
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    tenantId: subscription().tenantId
-    enableRbacAuthorization: true
-    enableSoftDelete: true
-  }
-}
-
-resource kvDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: 'diag-kv'
-  scope: keyVault
-  properties: {
-    workspaceId: logAnalytics.outputs.workspaceId
-    logs: [
-      {
-        categoryGroup: 'allLogs'
-        enabled: true
-      }
-    ]
-    metrics: [
-      {
-        category: 'AllMetrics'
-        enabled: true
-      }
-    ]
+// 7. Key Vault
+module keyVault 'modules/keyvault.bicep' = {
+  name: 'deploy-key-vault'
+  scope: resourceGroup(rg.name)
+  params: {
+    location: location
+    environment: environment
+    requiredTags: requiredTags
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
   }
 }
 
