@@ -40,6 +40,7 @@ var requiredTags = {
 // 1. Governance / Policy
 module policy 'modules/policy.bicep' = {
   name: 'deploy-policy'
+  scope: resourceGroup()
   params: {
     location: location
   }
@@ -48,6 +49,7 @@ module policy 'modules/policy.bicep' = {
 // 2. Log Analytics
 module logAnalytics 'modules/log-analytics.bicep' = {
   name: 'deploy-log-analytics'
+  scope: resourceGroup()
   params: {
     location: location
     environment: environment
@@ -59,6 +61,7 @@ module logAnalytics 'modules/log-analytics.bicep' = {
 // 3. Hub VNet & Firewall
 module hubVnet 'modules/hub-vnet.bicep' = {
   name: 'deploy-hub-vnet'
+  scope: resourceGroup()
   params: {
     location: location
     environment: environment
@@ -73,6 +76,7 @@ module hubVnet 'modules/hub-vnet.bicep' = {
 // 4. NSGs for Spokes
 module nsgApp 'modules/nsg.bicep' = {
   name: 'deploy-nsg-app'
+  scope: resourceGroup()
   params: {
     location: location
     environment: environment
@@ -112,6 +116,7 @@ module nsgApp 'modules/nsg.bicep' = {
 
 module nsgDb 'modules/nsg.bicep' = {
   name: 'deploy-nsg-db'
+  scope: resourceGroup()
   params: {
     location: location
     environment: environment
@@ -139,6 +144,7 @@ module nsgDb 'modules/nsg.bicep' = {
 // 5. Spoke VNet (e.g., Production or Dev workload Spoke)
 module spokeVnet 'modules/spoke-vnet.bicep' = {
   name: 'deploy-spoke-vnet'
+  scope: resourceGroup()
   dependsOn: [
     hubVnet
   ]
@@ -170,6 +176,7 @@ module spokeVnet 'modules/spoke-vnet.bicep' = {
 // 6. RBAC Assignments (Placeholder for demonstration)
 module rbac 'modules/rbac.bicep' = {
   name: 'deploy-rbac'
+  scope: resourceGroup()
   params: {
     roleAssignments: [] // Array of assignments would go here based on Entra ID Object IDs
   }
